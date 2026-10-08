@@ -155,6 +155,13 @@ def test_apr1_prefix_is_recognized() -> None:
     assert candidates[0].confidence == "high"
 
 
+def test_atlassian_pbkdf2_prefix_is_recognized() -> None:
+    sample = "$pbkdf2$salt$hash"
+    candidates = identify(sample)
+    assert candidates[0].algorithm == "PBKDF2-SHA1 (Atlassian)"
+    assert candidates[0].confidence == "high"
+
+
 # =============================================================================
 # Formatos especiais
 # =============================================================================

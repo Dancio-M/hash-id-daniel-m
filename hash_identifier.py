@@ -155,6 +155,8 @@ PREFIX_RULES: list[tuple[str, str, str]] = [
     ("$H$", "phpass", "variante phpass estilo phpBB"),
     # Drupal 7
     ("$S$", "Drupal 7 (SHA-512)", "hash estilo PHC do Drupal 7"),
+    # Atlassian/Jira
+    ("$pbkdf2$", "PBKDF2-SHA1 (Atlassian)", "formato PBKDF2 legado do Atlassian/Jira"),
     # scrypt como algumas implementações o codificam
     ("$7$", "scrypt", "hash estilo PHC scrypt"),
     # Padrão do Django — reconhecível pelo nome do algoritmo no prefixo
