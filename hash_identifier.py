@@ -446,6 +446,64 @@ def identify(raw_input: str) -> list[HashCandidate]:
                 reason='prefixo `eyJ` é o base64 de `{"` — JWT, não é um hash',
             )
         ]
+
+    if text.startswith(("http://", "https://")):
+        return [
+            HashCandidate(
+                algorithm="URL (não é um hash)",
+                confidence="low",
+                reason="Começa com http:// ou https://.",
+            )
+        ]
+
+    if (
+        text.startswith("0x")
+        and len(text) > 2
+        and all(char in "0123456789abcdefABCDEF" for char in text[2:])
+    ):
+        return [
+            HashCandidate(
+                algorithm="Hex com prefixo 0x (não é um hash)",
+                confidence="low",
+                reason="Começa com 0x e o restante contém apenas dígitos hexadecimais.",
+            )
+        ]
+
+    base32_body = text.rstrip("=")
+    padding = len(text) - len(base32_body)
+
+    if (
+        len(text) >= 16
+        and len(text) % 8 == 0
+        and padding == {0: 0, 2: 6, 4: 4, 5: 3, 7: 1}.get(len(base32_body) % 8)
+        and all(char in "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567" for char in base32_body)
+        and any(char in "234567" for char in base32_body)
+    ):
+        return [
+            HashCandidate(
+                algorithm="Base32 (não é um hash)",
+                confidence="low",
+                reason="Usa o alfabeto e o preenchimento característicos de Base32.",
+            )
+        ]
+
+    base58_alphabet = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
+
+    if (
+        26 <= len(text) <= 60
+        and all(char in base58_alphabet for char in text)
+        and any(char.isdigit() for char in text)
+        and any(char.isupper() for char in text)
+        and any(char.islower() for char in text)
+    ):
+        return [
+            HashCandidate(
+                algorithm="Base58 (não é um hash)",
+                confidence="low",
+                reason="Usa o alfabeto Base58, sem os caracteres 0, O, I e l.",
+            )
+        ]
+
     if any(c in text for c in "+/=") and len(text) > 8:
         # Hashes hex NUNCA contêm `+`, `/`, ou `=`.
         return [

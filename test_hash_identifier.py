@@ -485,6 +485,37 @@ def test_cli_reads_hashes_from_stdin(
     assert "SHA-1" in lines[1]
 
 
+def test_url_is_not_a_hash():
+    candidates = identify("https://example.org/path")
+
+    assert candidates
+    assert candidates[0].algorithm == "URL (não é um hash)"
+    assert candidates[0].confidence == "low"
+
+
+def test_0x_hex_is_not_a_hash():
+    candidates = identify("0x" + "a" * 40)
+
+    assert candidates
+    assert candidates[0].algorithm == "Hex com prefixo 0x (não é um hash)"
+    assert candidates[0].confidence == "low"
+
+
+def test_base32_is_not_a_hash():
+    candidates = identify("MZXW6YTBOI======")
+
+    assert candidates
+    assert candidates[0].algorithm == "Base32 (não é um hash)"
+    assert candidates[0].confidence == "low"
+
+
+def test_base58_is_not_a_hash():
+    candidates = identify("1BoatSLRHtKNngkdXEeobR76b53LETtpyT")
+
+    assert candidates
+    assert candidates[0].algorithm == "Base58 (não é um hash)"
+    assert candidates[0].confidence == "low"
+
 # =============================================================================
 # Cobertura abrangente da tabela PREFIX_RULES
 # =============================================================================
