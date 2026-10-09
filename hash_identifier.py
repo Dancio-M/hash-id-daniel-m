@@ -470,12 +470,11 @@ def identify(raw_input: str) -> list[HashCandidate]:
         ]
 
     base32_body = text.rstrip("=")
-    padding = len(text) - len(base32_body)
 
     if (
         len(text) >= 16
         and len(text) % 8 == 0
-        and padding == {0: 0, 2: 6, 4: 4, 5: 3, 7: 1}.get(len(base32_body) % 8)
+        and len(text) - len(base32_body) == {0: 0, 2: 6, 4: 4, 5: 3, 7: 1}.get(len(base32_body) % 8)
         and all(char in "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567" for char in base32_body)
         and any(char in "234567" for char in base32_body)
     ):
@@ -553,7 +552,7 @@ def _build_argument_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--file",
-        type=argparse.FileType("r", encoding="utf-8"),
+        type=argparse.FileType("r", encoding="utf-8"),  # pylint: disable=deprecated-class
         help="Lê um hash por linha de um arquivo.",
     )
     return parser
