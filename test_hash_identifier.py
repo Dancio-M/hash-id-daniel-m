@@ -66,11 +66,13 @@ no topo do ranking.
 
 # Terceiros: o próprio executor de testes. Também precisamos importá-lo aqui
 # para podermos usar seu decorador `@pytest.mark.parametrize` abaixo.
+import json
+import sys
 import pytest
 
 # Local: nosso próprio módulo. Extraímos as peças públicas sob teste —
 # a tabela de regras de prefixo, a dataclass de resultado e a função de entrada.
-from hash_identifier import PREFIX_RULES, HashCandidate, identify
+from hash_identifier import PREFIX_RULES, HashCandidate, identify, main
 
 # =============================================================================
 # Correspondências de prefixo (alta confiança)
@@ -431,6 +433,18 @@ def test_hash_candidate_is_frozen() -> None:
     raise AssertionError(
         "HashCandidate deveria estar congelado (frozen); a atribuição deveria ter falhado"
     )
+
+
+def test_json_cli_outputs_candidates(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    monkeypatch.setattr(sys, "argv", ["hashid", "--json", "a" * 32])
+
+    assert main() == 0
+    output = json.loads(capsys.readouterr().out)
+    assert output[0]["algorithm"] == "MD5"
+    assert output[0]["confidence"] == "medium"
 
 
 # =============================================================================
