@@ -78,6 +78,7 @@ from rich.console import Console
 # os candidatos a hash classificados.
 from rich.table import Table
 
+
 # =============================================================================
 # Tipo de Confiança — apenas três valores válidos
 # =============================================================================
@@ -463,6 +464,7 @@ def _build_argument_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "hash",
+        nargs="?",
         help="A string de hash a identificar (envolva em aspas simples se contiver $).",
     )
     parser.add_argument(
@@ -477,7 +479,11 @@ def _build_argument_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Imprime os candidatos como um array JSON.",
     )
-
+    parser.add_argument(
+        "--file",
+        type=argparse.FileType("r", encoding="utf-8"),
+        help="Lê um hash por linha de um arquivo.",
+    )
     return parser
 
 
@@ -521,6 +527,29 @@ def main() -> int:
     parser = _build_argument_parser()
     args = parser.parse_args()
     console = Console()
+
+    if args.file is not None:
+        if args.hash is not None:
+            parser.error("use um hash posicional ou --file")
+
+        try:
+            for line in args.file:
+                value = line.strip()
+                if not value:
+                    continue
+                candidates = identify(value)
+                if args.json:
+                    data = [asdict(candidate) for candidate in candidates[:args.top]]
+                    print(json.dumps(data, ensure_ascii=False))
+                else:
+                    name = candidates[0].algorithm if candidates else "nenhum candidato"
+                    print(f"{value}\t{name}")
+        finally:
+            args.file.close()
+        return 0
+
+    if args.hash is None:
+        parser.error("informe um hash ou --file")
 
     candidates = identify(args.hash)
 

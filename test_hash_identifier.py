@@ -73,6 +73,7 @@ import pytest
 # Local: nosso próprio módulo. Extraímos as peças públicas sob teste —
 # a tabela de regras de prefixo, a dataclass de resultado e a função de entrada.
 from hash_identifier import PREFIX_RULES, HashCandidate, identify, main
+from pathlib import Path
 
 # =============================================================================
 # Correspondências de prefixo (alta confiança)
@@ -445,6 +446,22 @@ def test_json_cli_outputs_candidates(
     output = json.loads(capsys.readouterr().out)
     assert output[0]["algorithm"] == "MD5"
     assert output[0]["confidence"] == "medium"
+
+
+def test_cli_reads_hashes_from_file(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    path = tmp_path / "hashes.txt"
+    path.write_text("a" * 32 + "\n" + "b" * 40 + "\n", encoding="utf-8")
+    monkeypatch.setattr(sys, "argv", ["hashid", "--file", str(path)])
+
+    assert main() == 0
+    lines = capsys.readouterr().out.splitlines()
+    assert len(lines) == 2
+    assert "MD5" in lines[0]
+    assert "SHA-1" in lines[1]
 
 
 # =============================================================================
