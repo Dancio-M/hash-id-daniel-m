@@ -437,6 +437,12 @@ def test_hash_candidate_is_frozen() -> None:
     )
 
 
+def test_hashcat_modes_are_exposed() -> None:
+    assert identify("a" * 32)[0].hashcat_mode == 0
+    assert identify("$2b$12$teste")[0].hashcat_mode == 3200
+    assert identify("a" * 24)[0].hashcat_mode is None
+
+
 def test_json_cli_outputs_candidates(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],

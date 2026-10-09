@@ -120,6 +120,7 @@ class HashCandidate:
     algorithm: str
     confidence: Confidence
     reason: str
+    hashcat_mode: int | None = None
 
 
 # =============================================================================
@@ -279,6 +280,17 @@ def _is_descrypt(text: str) -> bool:
 # pylint: disable=too-many-return-statements,too-many-branches
 
 
+HASHCAT_MODES: dict[str, int] = {
+    "MD5": 0,
+    "SHA-1": 100,
+    "SHA-256": 1400,
+    "NTLM": 1000,
+    "bcrypt": 3200,
+    "SHA-512 crypt": 1800,
+    "Argon2id": 34000,
+}
+
+
 def identify(raw_input: str) -> list[HashCandidate]:
     """
     Retorna candidatos classificados para qual algoritmo produziu `raw_input`.
@@ -327,6 +339,7 @@ def identify(raw_input: str) -> list[HashCandidate]:
                     algorithm=algorithm,
                     confidence="high",
                     reason=f"prefixo `{prefix}` — {note}",
+                    hashcat_mode=HASHCAT_MODES.get(algorithm),
                 )
             ]
 
@@ -397,6 +410,7 @@ def identify(raw_input: str) -> list[HashCandidate]:
                     algorithm=algorithm,
                     confidence=confidence,
                     reason=f"{len(text)} caracteres hex — {label}",
+                    hashcat_mode=HASHCAT_MODES.get(algorithm),
                 )
             )
         return candidates
@@ -503,6 +517,7 @@ def _render_table(
     table.add_column("algoritmo", style="bold white", no_wrap=True)
     table.add_column("confiança", no_wrap=True)
     table.add_column("motivo", style="dim")
+    table.add_column("modo hashcat", justify="right")
 
     # Cores para os níveis de confiança.
     confidence_colors: dict[Confidence, str] = {
@@ -516,6 +531,7 @@ def _render_table(
             candidate.algorithm,
             f"[{color}]{candidate.confidence}[/{color}]",
             candidate.reason,
+            str(candidate.hashcat_mode) if candidate.hashcat_mode is not None else "—",
         )
     console.print(table)
 
@@ -574,10 +590,15 @@ def main() -> int:
 
     # Dica útil — direciona o usuário para o cracker após a identificação.
     if trimmed[0].confidence == "high":
-        console.print(
-            "\n[dim]Próximo passo: tente o modo de quebra correspondente "
-            "(veja ../../beginner/hash-cracker).[/dim]"
-        )
+        if trimmed[0].hashcat_mode is not None:
+            console.print(
+                f"\n[dim]Próximo passo: hashcat -m {trimmed[0].hashcat_mode} "
+                "-a 0 hashes.txt wordlist.txt[/dim]"
+            )
+        else:
+            console.print(
+                "\n[dim]Modo hashcat não cadastrado para este candidato.[/dim]"
+            )
 
     return 0
 
