@@ -528,12 +528,16 @@ def main() -> int:
     args = parser.parse_args()
     console = Console()
 
-    if args.file is not None:
-        if args.hash is not None:
-            parser.error("use um hash posicional ou --file")
+    if args.file is not None and args.hash is not None:
+        parser.error("use um hash posicional ou --file")
 
+    if args.file is not None or args.hash is None:
+        if args.file is None and sys.stdin.isatty():
+            parser.error("informe um hash, --file ou envie linhas pelo stdin")
+
+        stream = args.file if args.file is not None else sys.stdin
         try:
-            for line in args.file:
+            for line in stream:
                 value = line.strip()
                 if not value:
                     continue
@@ -545,11 +549,9 @@ def main() -> int:
                     name = candidates[0].algorithm if candidates else "nenhum candidato"
                     print(f"{value}\t{name}")
         finally:
-            args.file.close()
+            if args.file is not None:
+                args.file.close()
         return 0
-
-    if args.hash is None:
-        parser.error("informe um hash ou --file")
 
     candidates = identify(args.hash)
 

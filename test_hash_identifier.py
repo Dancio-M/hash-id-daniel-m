@@ -69,6 +69,7 @@ no topo do ranking.
 import json
 import sys
 import pytest
+import io
 
 # Local: nosso próprio módulo. Extraímos as peças públicas sob teste —
 # a tabela de regras de prefixo, a dataclass de resultado e a função de entrada.
@@ -456,6 +457,20 @@ def test_cli_reads_hashes_from_file(
     path = tmp_path / "hashes.txt"
     path.write_text("a" * 32 + "\n" + "b" * 40 + "\n", encoding="utf-8")
     monkeypatch.setattr(sys, "argv", ["hashid", "--file", str(path)])
+
+    assert main() == 0
+    lines = capsys.readouterr().out.splitlines()
+    assert len(lines) == 2
+    assert "MD5" in lines[0]
+    assert "SHA-1" in lines[1]
+
+
+def test_cli_reads_hashes_from_stdin(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    monkeypatch.setattr(sys, "argv", ["hashid"])
+    monkeypatch.setattr(sys, "stdin", io.StringIO("a" * 32 + "\n" + "b" * 40 + "\n"))
 
     assert main() == 0
     lines = capsys.readouterr().out.splitlines()
